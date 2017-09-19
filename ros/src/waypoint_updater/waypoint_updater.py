@@ -49,14 +49,9 @@ class WaypointUpdater(object):
         interval = rospy.Rate(1)
 
         while not rospy.is_shutdown():
-          self.count += 1
-          print("publishing nearest points", self.count)
-
           if(self.current_waypoints and self.current_pose):
             nearest_waypoint = self.find_nearest_waypoint()
             self.publish_next_waypoints(nearest_waypoint)
-
-            print("nearest waypoint", self.current_waypoints[nearest_waypoint].pose.pose.position)
 
           interval.sleep()
 
@@ -81,9 +76,6 @@ class WaypointUpdater(object):
             if(distance < nearest_waypoint[1]):
               nearest_waypoint = [i, distance]
 
-        # print("nearest waypoint is: ", waypoints[nearest_waypoint[0]])
-        # print("distance to waypoint is: ", nearest_waypoint[1])
-
         return nearest_waypoint[0]
 
     # publish a list of next n waypoints to /final_waypoints
@@ -102,14 +94,7 @@ class WaypointUpdater(object):
         #print(msg.pose.position.y)
 
     def waypoints_cb(self, waypoints):
-        #print(waypoints)
         self.current_waypoints = waypoints.waypoints
-        start = 156
-
-        for i in range(len(self.current_waypoints)):
-          #print(w)
-          w = self.current_waypoints[i]
-          #print(i, w.pose.pose.position.x, ",", w.pose.pose.position.y);
 
         # we only need the message once, unsubscribe as soon as we got the message
         self.base_waypoints_sub.unregister()
