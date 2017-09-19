@@ -53,9 +53,10 @@ class WaypointUpdater(object):
           print("publishing nearest points", self.count)
 
           if(self.current_waypoints and self.current_pose):
-            distance = self.find_nearest_waypoint()
+            nearest_waypoint = self.find_nearest_waypoint()
+            self.publish_next_waypoints(nearest_waypoint)
 
-            print("distance", distance)
+            print("nearest waypoint", self.current_waypoints[nearest_waypoint].pose.pose.position)
 
           interval.sleep()
 
@@ -80,10 +81,21 @@ class WaypointUpdater(object):
             if(distance < nearest_waypoint[1]):
               nearest_waypoint = [i, distance]
 
-        print("nearest waypoint is: ", waypoints[nearest_waypoint[0]])
-        print("distance to waypoint is: ", nearest_waypoint[1])
+        # print("nearest waypoint is: ", waypoints[nearest_waypoint[0]])
+        # print("distance to waypoint is: ", nearest_waypoint[1])
 
         return nearest_waypoint[0]
+
+    # publish a list of next n waypoints to /final_waypoints
+    def publish_next_waypoints(self, start_index):
+        waypoints = Lane()
+
+        waypoints.header.stamp = rospy.Time(0)
+        waypoints.header.frame_id = self.current_pose.header.frame_id
+
+        waypoints.waypoints = self.current_waypoints[start_index:start_index + 200]
+
+        self.final_waypoints_pub.publish(waypoints)
 
     def pose_cb(self, msg):
         self.current_pose = msg
