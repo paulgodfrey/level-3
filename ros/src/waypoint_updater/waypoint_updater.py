@@ -53,19 +53,37 @@ class WaypointUpdater(object):
           print("publishing nearest points", self.count)
 
           if(self.current_waypoints and self.current_pose):
-            print(self.current_pose)
-
-            car_pos = self.current_pose.pose.position
-            wpt_pos = self.current_waypoints[0].pose.pose.position
-
-            a = np.array((car_pos.x, car_pos.y, car_pos.z))
-            b = np.array((wpt_pos.x, wpt_pos.y, wpt_pos.z))
-
-            distance = np.linalg.norm(a - b)
+            distance = self.find_nearest_waypoint()
 
             print("distance", distance)
 
           interval.sleep()
+
+    # calculate the euclidian distance between our car and a waypoint
+    def calculate_distance(self, car_pos, wpt_pos):
+        a = np.array((car_pos.x, car_pos.y, car_pos.z))
+        b = np.array((wpt_pos.x, wpt_pos.y, wpt_pos.z))
+
+        distance = np.linalg.norm(a-b)
+
+        return distance
+
+    # find index of nearest waypoint in self.current_waypoints
+    def find_nearest_waypoint(self):
+        waypoints = self.current_waypoints
+        nearest_waypoint = [0, 100000] # index, ceiling for min distance
+        car_pos = self.current_pose.pose.position
+
+        # loop through waypoints and find min distance
+        for i in range(len(waypoints)):
+            distance = self.calculate_distance(car_pos, waypoints[i].pose.pose.position)
+            if(distance < nearest_waypoint[1]):
+              nearest_waypoint = [i, distance]
+
+        print("nearest waypoint is: ", waypoints[nearest_waypoint[0]])
+        print("distance to waypoint is: ", nearest_waypoint[1])
+
+        return nearest_waypoint[0]
 
     def pose_cb(self, msg):
         self.current_pose = msg
