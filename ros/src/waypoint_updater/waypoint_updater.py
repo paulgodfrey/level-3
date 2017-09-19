@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import numpy as np
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 
@@ -28,25 +29,60 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
+        self.current_waypoints = None
+        self.base_waypoints_sub = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
-        rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
 
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
-        # TODO: Add other member variables you need below
+        self.count = 0;
 
+        # TODO: Add other member variables you need below
+        self.update()
         rospy.spin()
 
+    def update(self):
+        interval = rospy.Rate(1)
+
+        while not rospy.is_shutdown():
+          self.count += 1
+          print("publishing nearest points", self.count)
+
+          if(self.current_waypoints and self.current_pose):
+            print(self.current_pose)
+
+            car_pos = self.current_pose.pose.position
+            wpt_pos = self.current_waypoints[0].pose.pose.position
+
+            a = np.array((car_pos.x, car_pos.y, car_pos.z))
+            b = np.array((wpt_pos.x, wpt_pos.y, wpt_pos.z))
+
+            distance = np.linalg.norm(a - b)
+
+            print("distance", distance)
+
+          interval.sleep()
+
     def pose_cb(self, msg):
-        # TODO: Implement
-        pass
+        self.current_pose = msg
+        #print(msg.pose.position.y)
 
     def waypoints_cb(self, waypoints):
-        # TODO: Implement
-        pass
+        #print(waypoints)
+        self.current_waypoints = waypoints.waypoints
+        start = 156
+
+        for i in range(len(self.current_waypoints)):
+          #print(w)
+          w = self.current_waypoints[i]
+          #print(i, w.pose.pose.position.x, ",", w.pose.pose.position.y);
+
+        # we only need the message once, unsubscribe as soon as we got the message
+        self.base_waypoints_sub.unregister()
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
